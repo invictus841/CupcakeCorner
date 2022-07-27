@@ -8,10 +8,16 @@
 import SwiftUI
 
 struct CheckoutView: View {
-    @ObservedObject var order: Order
+    @ObservedObject var order: SharedOrder
     
+    // confirmation alert
     @State private var confirmationMessage = ""
-    @State private var showignConfirmation = false
+    @State private var showingConfirmation = false
+
+    // error alert
+    @State private var errorMessage = ""
+    @State private var showingError = false
+
     
     var body: some View {
         ScrollView {
@@ -39,15 +45,20 @@ struct CheckoutView: View {
         }
         .navigationTitle("Check out")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Thank you!", isPresented: $showignConfirmation) {
+        .alert("Thank you!", isPresented: $showingConfirmation) {
             Button("OK") { }
         } message: {
             Text(confirmationMessage)
         }
+        .alert("Oups!", isPresented: $showingError) {
+            Button("OK") { }
+        } message: {
+            Text(errorMessage)
+        }
     }
     
     func placeOrder() async {
-        guard let encoded = try? JSONEncoder().encode(order) else {
+        guard let encoded = try? JSONEncoder().encode(order.data) else {
             print("Failed to encode order")
             return
         }
@@ -62,16 +73,18 @@ struct CheckoutView: View {
             // handle the result
 
             let decodedOrder = try JSONDecoder().decode(Order.self, from: data)
-            confirmationMessage = "Your order for \(decodedOrder.quantity) x \(Order.types[decodedOrder.type].lowercased()) cupcakes is on its way!"
-            showignConfirmation = true
+            confirmationMessage = "Your order for \(decodedOrder.quantity) x \(SharedOrder.types[decodedOrder.type].lowercased()) cupcakes is on its way!"
+            showingConfirmation = true
         } catch {
-            print("Checkout failed.")
+//            print("Checkout failed.")
+            errorMessage = "Checkout failed, check your internet connection"
+            showingError = true
         }
     }
 }
 
 struct CheckoutView_Previews: PreviewProvider {
     static var previews: some View {
-        CheckoutView(order: Order())
+        CheckoutView(order: SharedOrder())
     }
 }
